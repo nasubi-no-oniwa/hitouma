@@ -1,0 +1,34 @@
+// ランキングのルールの試験（GitHub の上で Firebase の試し用データベースを立てて試す。本番のデータには触らない）
+const NS='ft-red-default-rtdb',PROJ='ft-red',BASE='http://127.0.0.1:9000';
+const b64=o=>Buffer.from(JSON.stringify(o)).toString('base64url');
+const tok=uid=>b64({alg:'none',typ:'JWT'})+'.'+b64({uid,sub:uid,user_id:uid,iat:Math.floor(Date.now()/1000),exp:Math.floor(Date.now()/1000)+3600,aud:PROJ,iss:'https://securetoken.google.com/'+PROJ,provider_id:'anonymous',firebase:{sign_in_provider:'anonymous'}})+'.';
+async function req(method,path,uid,body){const r=await fetch(BASE+'/'+path+'.json?ns='+NS+(uid?'&auth='+tok(uid):''),{method,headers:{'Content-Type':'application/json'},body:body===undefined?undefined:JSON.stringify(body)});return {ok:r.ok,status:r.status,j:await r.json().catch(()=>null)};}
+const sleep=ms=>new Promise(r=>setTimeout(r,ms));
+let fail=0;const ex=(name,res,want)=>{const ok=res.ok===want;console.log((ok?'OK  ':'NG  ')+name+' → '+res.status);if(!ok){fail++;console.log(JSON.stringify(res.j));}};
+const TS={'.sv':'timestamp'};const P='hitouma';
+const U='user1aaaaaaaaaaaaaaaaaaa',U2='user2bbbbbbbbbbbbbbbbbbb';
+const FB='0,2200,280,780,130,94,48,2,0,50,0,6000',FQ='1,3800,150,420,170,85,48,3,1,52,0,12000';
+const tick=async uid=>{const r=await req('PUT',P+'/last/'+uid,uid,{t:TS});return r.j&&r.j.t;};
+const rec=(st,s,f=FB,n='テスト')=>({n,f,s,k:10000000-s,st,v:1,t:TS});
+const dkNow=()=>Math.floor((Date.now()+32400000)/86400000);
+let st=await tick(U);
+ex('調教のすぐあとは記録できない（2秒たっていない）',await req('PUT',P+'/r/b100/'+U,U,rec(st,12000)),false);
+await sleep(2200);
+ex('記録できる',await req('PUT',P+'/r/b100/'+U,U,rec(st,12000)),true);
+ex('遅い記録では上書きできない',await req('PUT',P+'/r/b100/'+U,U,rec(st,13000)),false);
+ex('速い記録なら上書きできる',await req('PUT',P+'/r/b100/'+U,U,rec(st,11500)),true);
+ex('k をごまかせない',await req('PUT',P+'/r/b200/'+U,U,{...rec(st,24000),k:9999999}),false);
+ex('時計をごまかせない',await req('PUT',P+'/r/b200/'+U,U,rec(st-5000,24000)),false);
+ex('ほかの人の場所には書けない',await req('PUT',P+'/r/b200/'+U2,U,rec(st,24000)),false);
+ex('4本脚のフォームは2本脚の表に入らない',await req('PUT',P+'/r/b200/'+U,U,rec(st,24000,FQ)),false);
+ex('4本脚の表に入る',await req('PUT',P+'/r/q1000/'+U,U,rec(st,60000,FQ)),true);
+ex('ない表には書けない',await req('PUT',P+'/r/b300/'+U,U,rec(st,30000)),false);
+ex('ムーンウォークのフォームは記録できない',await req('PUT',P+'/r/b100/'+U,U,rec(st,9000,'0,2200,280,780,130,94,48,2,0,50,1,6000')),false);
+const dk=dkNow();
+ex('今日の記録',await req('PUT',P+'/d/b100/'+U,U,{...rec(st,11500),dk,ds:dk*10000000+10000000-11500}),true);
+ex('今日の日付をごまかせない',await req('PUT',P+'/d/b200/'+U,U,{...rec(st,23000),dk:dk+1,ds:(dk+1)*10000000+10000000-23000}),false);
+ex('ムーンウォークは1回だけ',await req('PUT',P+'/mw/'+U,U,{t:TS}),true);
+ex('ムーンウォークの2回目',await req('PUT',P+'/mw/'+U,U,{t:TS}),false);
+ex('ランキングは読める',await req('GET',P+'/r/b100'),true);
+ex('ほかの人の時計は読めない',await req('GET',P+'/last/'+U,U2),false);
+console.log(fail?('失敗 '+fail+' 件'):'すべて OK');process.exit(fail?1:0);

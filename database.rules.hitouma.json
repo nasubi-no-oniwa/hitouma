@@ -1,0 +1,59 @@
+{
+  "last": {
+    "$uid": {
+      ".read": "auth != null && auth.uid === $uid",
+      ".write": "auth != null && auth.uid === $uid && newData.exists() && (!data.exists() || now - data.child('t').val() > 1500)",
+      ".validate": "newData.hasChildren(['t'])",
+      "t": { ".validate": "newData.val() === now" },
+      "$other": { ".validate": false }
+    }
+  },
+  "r": {
+    "$b": {
+      ".read": true,
+      ".indexOn": ["k"],
+      "$uid": {
+        ".write": "auth != null && auth.uid === $uid && newData.exists() && $b.matches(/^(b100|b200|q1000|q2000)$/) && (!data.exists() || newData.child('k').val() > data.child('k').val())",
+        ".validate": "newData.hasChildren(['n', 'f', 's', 'k', 'st', 'v', 't']) && newData.child('st').val() === root.child('hitouma/last/' + auth.uid + '/t').val() && now - newData.child('st').val() >= 2000 && now - newData.child('st').val() <= 3600000",
+        "n": { ".validate": "newData.isString() && newData.val().length >= 1 && newData.val().length <= 16" },
+        "f": { ".validate": "newData.isString() && newData.val().matches(/^[01],[0-9]{1,4},[0-9]{1,4},[0-9]{1,4},[0-9]{1,4},[0-9]{1,3},[0-9]{1,3},-?[0-9]{1,3},[0-5],[0-9]{1,3},0,[0-9]{1,6}$/) && (($b.beginsWith('q') && newData.val().beginsWith('1,')) || (!$b.beginsWith('q') && newData.val().beginsWith('0,')))" },
+        "s": { ".validate": "newData.isNumber() && newData.val() % 1 === 0 && newData.val() >= 3000 && newData.val() <= 900000" },
+        "k": { ".validate": "newData.val() === 10000000 - newData.parent().child('s').val()" },
+        "st": { ".validate": "newData.isNumber()" },
+        "v": { ".validate": "newData.val() === 1" },
+        "t": { ".validate": "newData.val() === now" },
+        "$other": { ".validate": false }
+      }
+    }
+  },
+  "d": {
+    "$b": {
+      ".read": true,
+      ".indexOn": ["ds"],
+      "$uid": {
+        ".write": "auth != null && auth.uid === $uid && newData.exists() && $b.matches(/^(b100|b200|q1000|q2000)$/) && (!data.exists() || data.child('dk').val() !== newData.child('dk').val() || newData.child('k').val() > data.child('k').val())",
+        ".validate": "newData.hasChildren(['n', 'f', 's', 'k', 'st', 'v', 't', 'dk', 'ds']) && newData.child('st').val() === root.child('hitouma/last/' + auth.uid + '/t').val() && now - newData.child('st').val() >= 2000 && now - newData.child('st').val() <= 3600000",
+        "n": { ".validate": "newData.isString() && newData.val().length >= 1 && newData.val().length <= 16" },
+        "f": { ".validate": "newData.isString() && newData.val().matches(/^[01],[0-9]{1,4},[0-9]{1,4},[0-9]{1,4},[0-9]{1,4},[0-9]{1,3},[0-9]{1,3},-?[0-9]{1,3},[0-5],[0-9]{1,3},0,[0-9]{1,6}$/) && (($b.beginsWith('q') && newData.val().beginsWith('1,')) || (!$b.beginsWith('q') && newData.val().beginsWith('0,')))" },
+        "s": { ".validate": "newData.isNumber() && newData.val() % 1 === 0 && newData.val() >= 3000 && newData.val() <= 900000" },
+        "k": { ".validate": "newData.val() === 10000000 - newData.parent().child('s').val()" },
+        "st": { ".validate": "newData.isNumber()" },
+        "v": { ".validate": "newData.val() === 1" },
+        "t": { ".validate": "newData.val() === now" },
+        "dk": { ".validate": "newData.isNumber() && newData.val() % 1 === 0 && newData.val() * 86400000 <= now + 32400000 && (newData.val() + 1) * 86400000 > now + 32400000" },
+        "ds": { ".validate": "newData.val() === newData.parent().child('dk').val() * 10000000 + newData.parent().child('k').val()" },
+        "$other": { ".validate": false }
+      }
+    }
+  },
+  "mw": {
+    ".read": true,
+    "$uid": {
+      ".write": "auth != null && auth.uid === $uid && !data.exists() && newData.exists() && root.child('hitouma/last/' + auth.uid).exists()",
+      ".validate": "newData.hasChildren(['t'])",
+      "t": { ".validate": "newData.val() === now" },
+      "$other": { ".validate": false }
+    }
+  },
+  "hidden": { ".read": true }
+}

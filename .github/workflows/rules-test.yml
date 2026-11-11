@@ -1,0 +1,30 @@
+# ランキングのルールの試験（本番のデータには触らない。試し用のデータベースで試す）
+name: ルールの試験
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'test/**'
+      - 'database.rules.hitouma.json'
+      - '.github/workflows/rules-test.yml'
+  workflow_dispatch:
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: 21
+      - name: 試し用のルールを作る
+        run: |
+          node -e 'const fs=require("fs");fs.writeFileSync(process.env.RUNNER_TEMP+"/database.rules.json",JSON.stringify({rules:{".read":false,".write":false,hitouma:JSON.parse(fs.readFileSync("database.rules.hitouma.json","utf8"))}}))'
+          printf '{"database":{"rules":"database.rules.json"},"emulators":{"database":{"port":9000}}}' > "$RUNNER_TEMP/firebase.json"
+          mkdir -p "$RUNNER_TEMP/test" && cp test/rules-test.mjs "$RUNNER_TEMP/test/"
+      - name: 試す
+        working-directory: ${{ runner.temp }}
+        run: npx -y firebase-tools@latest emulators:exec --only database --project ft-red "node test/rules-test.mjs"
