@@ -373,7 +373,7 @@ function buildTrack(len,kind){
  const disc=new THREE.Mesh(new THREE.CylinderGeometry(.9,.9,.12,24),M(0xe8322a));disc.rotation.x=Math.PI/2;disc.position.set(len,4.4,-7.2);g.add(disc);
  // スタート
  const sl=new THREE.Mesh(new THREE.PlaneGeometry(.3,13),M(0xffffff));sl.rotation.x=-Math.PI/2;sl.position.set(0,.01,0);g.add(sl);
- const gate=new THREE.Group();for(let i=0;i<=8;i++){const b=new THREE.Mesh(new THREE.BoxGeometry(.12,2.4,.12),M(0x2f6f3a));b.position.set(-1.2,1.2,-4.4+i*1.1);gate.add(b);}const top=new THREE.Mesh(new THREE.BoxGeometry(.3,.3,9.2),M(0x2f6f3a));top.position.set(-1.2,2.4,0);gate.add(top);g.add(gate);
+ if(kind!=='train'){const gate=new THREE.Group();for(let i=0;i<=8;i++){const b=new THREE.Mesh(new THREE.BoxGeometry(.12,2.4,.12),M(0x2f6f3a));b.position.set(-1.2,1.2,-4.4+i*1.1);gate.add(b);}const top=new THREE.Mesh(new THREE.BoxGeometry(.3,.3,9.2),M(0x2f6f3a));top.position.set(-1.2,2.4,0);gate.add(top);g.add(gate);}
  // スタンド（ゴールの前）と観客
  if(kind!=='train'){
  const st=new THREE.Mesh(new THREE.BoxGeometry(170,6,14),M(0xd9d4c6));st.position.set(len-60,3,-24);g.add(st);
@@ -567,7 +567,7 @@ function runRace(i){const f=FORM,q=f.q?'q':'b',d=S.DIST[q][i];RI=i;mode='race';m
  RACE={d,t:0,end:null,lead:null,shown:new Set(),final:false,half:false,q:q==='q',done:false,rate:1,leadT88:0};
  const ld=fins[0];if(ld){const xs=ld.sim.xs;let j=xs.findIndex(x=>x>=d*.86);RACE.leadT88=j<0?ld.fin/1000:j*S.DT;}
  const tgt={100:1e9,200:13,1000:14,2000:20}[d];RACE.rate0=Math.max(1,RACE.leadT88/tgt);
- $('hud').hidden=false;$('hRace').textContent=t('raceN',{i:i+1,d});$('skipBtn').hidden=false;$('pad').hidden=true;
+ $('hud').hidden=false;$('hRace').textContent=t('raceN',{i:i+1,d});$('skipBtn').hidden=false;$('pad').hidden=true;$('quitBtn').hidden=true;
  const mini=$('mini');mini.querySelectorAll('.dt').forEach(e=>e.remove());RUN.forEach((r,j)=>{const e=document.createElement('div');e.className='dt'+(r.me?' me':'');e.style.background='#'+(r.me?SILKS[0]:SILKS[(j%7)+1]).toString(16).padStart(6,'0');r.dot=e;mini.appendChild(e);});
  telop('');big(t('raceN',{i:i+1,d}));RACE.pre=1.6;fanfare();crowdOn(.08);}
 function simAt(r,tt){const n=r.sim.xs.length;let i=Math.floor(tt/S.DT);if(i<0)return {x:0,l:0,v:0,s:0};if(i>=n-1){const j=n-1;return {x:r.sim.xs[j],l:r.sim.ls[j],v:r.fin!=null?0:r.sim.vs[j],s:0,end:true};}
@@ -742,7 +742,7 @@ addEventListener('resize',resize);resize();
 let last=performance.now();
 function trainCam(raw){const x=TRH?TRH.root.position.x:0;const w=innerWidth,h=innerHeight,por=w<h;
  CAM.fov=por?62:46;CAM.aspect=w/h;
- const fq=TQ?1:1.25;CAM.position.set(x-(por?3.5:3.6)*fq,(por?1.7:1.5)*fq,(por?3.6:3.4)*fq);CAM.lookAt(x+.4,TQ?.6:.9,0);CAM.rotateX(por?-.34:-.28);CAM.updateProjectionMatrix();}
+ const fq=TQ?1:1.25;CAM.position.set(x-(por?3.5:3.6)*fq,(por?1.7:1.5)*fq,(por?3.6:3.4)*fq);CAM.lookAt(x+.4,TQ?.6:.9,0);CAM.rotateX(por?-.27:-.12);CAM.updateProjectionMatrix();}
 function trainAnim(raw){if(!TRH)return;const d=trainDist();TRH.root.position.x=lerp(TRH.root.position.x,Math.min(S.TRAIN[TQ?'q':'b'],d),1-Math.exp(-raw*12));
  const feet=[],air=[];const n=TQ?4:2;
  for(let i=0;i<n;i++){const L=legs[i];if(!L)continue;if(!L.down){L.foot=lerp(L.foot,1,1-Math.exp(-raw*10));L.air=lerp(L.air,0,1-Math.exp(-raw*6));}else L.air=lerp(L.air,0,1-Math.exp(-raw*14));feet.push(L.foot);air.push(L.down?0:Math.max(.25,L.air));}
