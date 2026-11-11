@@ -528,8 +528,8 @@ function finishTrain(){if(mode!=='train')return;const now=performance.now();
  const T=tFirst?now-tFirst:now-tStart;const shift=tFirst?tFirst-tStart:0;
  const f=S.extract(steps.map(s=>({...s,t0:s.t0-shift,t1:(s.t1||0)-shift})),TQ,T);
  mode='trained';mT=0;fingerMarks();$('quitBtn').hidden=true;setPadMsg();
- if(!f){big(t('few'));setTimeout(()=>startTrain(TQ),1300);return;}
- FORM=f;FSTR=S.encode(f);big(t('done'));fanfare();setTimeout(showDiag,1100);}
+ if(!f){big(t('few'));FORM=null;mode='few';mT=0;return;}
+ FORM=f;FSTR=S.encode(f);big(t('done'));fanfare();}
 $('quitBtn').onclick=()=>showTitle();
 
 // ===== フォーム診断 =====
@@ -750,7 +750,11 @@ function trainAnim(raw){if(!TRH)return;const d=trainDist();TRH.root.position.x=l
  pose(TRH,raw,{amp:1,feet,air,g:2,still:true});}
 let ogpReady=false;
 const TSC=+(Q.get('ts')||1);
-function loop(now){requestAnimationFrame(loop);const raw=Math.min(.1,Math.max(0,(now-last)/1000))*TSC;last=now;mT+=raw;telT+=raw;
+const STEP=Q.has('step');
+function loop(now){requestAnimationFrame(loop);const raw=Math.min(.1,Math.max(0,(now-last)/1000))*TSC;last=now;frame(raw);}
+function frame(raw){mT+=raw;telT+=raw;
+ if(mode==='trained'&&FORM&&mT>1.1&&!STEP)showDiag();
+ if(mode==='few'&&mT>1.3)startTrain(TQ);
  CAM.clearViewOffset&&mode!=='setup'&&mode!=='count'&&mode!=='train'&&mode!=='trained'&&CAM.view&&CAM.clearViewOffset();
  if(mode==='video')return;
  if(mode==='count'&&mT>.9)beginWalk();
@@ -770,8 +774,8 @@ if(OGP||ICON){mode='ogp';document.body.style.background='transparent';clearRunne
  const w=innerWidth,h=innerHeight;if(OGP){CAM.fov=30;CAM.position.set(104.6,1.35,5.4);CAM.lookAt(99.3,.75,-.7);CAM.rotateY(.30);}else{CAM.fov=30;CAM.position.set(103.6,1.0,2.6);CAM.lookAt(100.0,.6,0);}CAM.updateProjectionMatrix();
  if(OGP){const o=$('ogpT');o.hidden=false;o.innerHTML='<b>'+esc(t('title'))+'</b><i>'+esc(t('sub'))+'</i><u>'+esc(lang==='ja'?'指で歩いて、走りを覚えさせろ':t('btnBs'))+'</u>';}
  R3.render(SC,CAM);window.__OGP_READY=true;}
-else{applyLang();showTitle();requestAnimationFrame(loop);}
-window.__HT={CAM,TRHf:()=>TRH,demo:(fs)=>{FSTR=fs;FORM=S.decode(fs);TQ=FORM.q;ticketP=takeTicket();ghostP=loadGhosts();startRaces();},get mode(){return mode;},get form(){return FSTR;},get res(){return RES;},S,startTrain,showDiag,startRaces,get race(){return RACE;},openRank,setLang:k=>{lang=k;applyLang();}};
+else{applyLang();showTitle();if(!STEP)requestAnimationFrame(loop);}
+window.__HT={step:dt=>frame(dt),diagWith:fs=>{FSTR=fs;FORM=S.decode(fs);TQ=FORM.q;showDiag();},CAM,TRHf:()=>TRH,demo:(fs)=>{FSTR=fs;FORM=S.decode(fs);TQ=FORM.q;ticketP=takeTicket();ghostP=loadGhosts();startRaces();},get mode(){return mode;},get form(){return FSTR;},get res(){return RES;},S,startTrain,showDiag,startRaces,get race(){return RACE;},openRank,setLang:k=>{lang=k;applyLang();}};
 </script>
 </body>
 </html>
