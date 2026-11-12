@@ -229,6 +229,13 @@ if(document.body)go();else document.addEventListener('DOMContentLoaded',go);
 </div>
 
 <script type="module">
+
+// Xの投稿で引用するツイート（なすびのお庭の管理ページ quote/ で日本語・英語を貼りかえられる）
+var NQ=window.__nq||(window.__nq={q:{}});if(!NQ.f){NQ.f=1;fetch('https://ft-red-default-rtdb.asia-southeast1.firebasedatabase.app/xquote/g/hitouma.json').then(r=>r.json()).then(d=>{if(d&&typeof d==='object')NQ.q=d;}).catch(()=>{});}
+function quoteURL(){let l='';try{if(typeof lang==='string')l=lang;}catch(e){}if(!l)l=document.documentElement.lang||'ja';const u=(l.slice(0,2)==='ja'?NQ.q.ja:NQ.q.en)||'';return /^https:\/\/x\.com\/[A-Za-z0-9_]{1,15}\/status\/\d{5,25}$/.test(u)?u:'';}
+function xIntent(text,url){const q=quoteURL();return 'https://x.com/intent/post?text='+encodeURIComponent(q?text+'\n'+url:text)+'&url='+encodeURIComponent(q||url);}
+function xIntentT(text){const q=quoteURL();return 'https://x.com/intent/post?text='+encodeURIComponent(text)+(q?'&url='+encodeURIComponent(q):'');}
+function nqS(o){const q=quoteURL();if(!q||!o)return o;o=Object.assign({},o);o.text=(o.text||'')+(o.url?'\n'+o.url:'')+'\n'+q;delete o.url;return o;}
 import * as THREE from 'three';
 import * as S from './sim.js?v=1';
 const $=id=>document.getElementById(id);
@@ -642,7 +649,7 @@ function showResult(){mode='result';crowdOn(0);$('hud').hidden=true;$('skipBtn')
 $('againBtn').onclick=()=>startTrain(TQ);$('rTop').onclick=()=>showTitle();$('rRank').onclick=()=>openRank((FORM&&FORM.q?'q':'b')+S.DIST[FORM&&FORM.q?'q':'b'][0],'d',true);
 const shareURL=()=>'https://nasubi-no-oniwa.github.io/hitouma/';
 function postText(){const nm=myName();if(RES.some(r=>r.moon))return t('postMoon',{n:nm});const a=RES[0],b=RES[1];return t('post',{n:nm,d1:a.d+'m',t1:fmtT(a.ms),p1:a.place,d2:b.d+'m',t2:fmtT(b.ms),p2:b.place,g:gradeOf()});}
-function openX(text,url){const u='https://x.com/intent/post?text='+encodeURIComponent(text)+'&url='+encodeURIComponent(url);const w=window.open(u,'_blank');if(!w)location.href=u;}
+function openX(text,url){const u=xIntent(text,url);const w=window.open(u,'_blank');if(!w)location.href=u;}
 $('xBtn').onclick=()=>openX(postText(),shareURL());
 
 // ===== 最後の直線を動画にする =====
@@ -680,7 +687,7 @@ function vidDone(blob,mime){mode='result';show('vidPanel');
  $('vidPrev').hidden=false;const url=URL.createObjectURL(blob);$('vidPrev').src=url;$('vidPrev').play().catch(()=>{});
  const ext=/mp4/.test(mime)?'mp4':'webm';const nm='hitouma_'+Date.now()+'.'+ext;const file=new File([blob],nm,{type:blob.type});const canShare=!!(navigator.canShare&&navigator.canShare({files:[file]}));
  $('vShare').hidden=!canShare;$('vSave').hidden=false;$('vMsg').textContent=canShare?t('vmade'):t('shareHint');
- $('vShare').onclick=async()=>{try{await navigator.share({files:[file],text:postText()+'\n'+shareURL()});}catch(e){}};
+ $('vShare').onclick=async()=>{try{await navigator.share(nqS({files:[file],text:postText()+'\n'+shareURL()}));}catch(e){}};
  $('vSave').onclick=()=>{const a=document.createElement('a');a.href=url;a.download=nm;document.body.appendChild(a);a.click();a.remove();};}
 $('vidBtn').onclick=()=>makeVideo();$('vX').onclick=()=>openX(postText(),shareURL());$('vBack').onclick=()=>show('result');
 
